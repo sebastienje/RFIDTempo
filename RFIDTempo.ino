@@ -10,13 +10,18 @@ int servoPosition = 50;
 boolean buttonState = HIGH;
 boolean previousButtonState = HIGH;
 boolean tempoState = HIGH;
-int tempos[] = {4000,4000,4000}; // les trois tempos par défaut de départ
-int temposMedium = 0;
+//int tempos[] = {4000,4000,4000}; // les trois tempos par dï¿½faut de dï¿½part
+int temposMedium = -1;
 int lastChangeTime = 0;
-int pulseCount = 0;
 int vitesse = 0;
-int vitesse_i = 0; //vitesse servo inversé
+int vitesse_i = 0; //vitesse servo inversÃ©
 
+int targetPeriod = 4000;
+
+const float smoothingFactor = 3.0; // A augmenter pour que le systÃ¨me rÃ©agisse plus lentement aux variations de frÃ©quence de l'utilisateur
+const float targetFactor = 0.2; // A augmenter pour que le systÃ¨me se dirige plus rapidement vers la frÃ©quence cible
+
+const float factorSum = smoothingFactor + targetFactor + 1.0;
 
 // Connect the Reader's RX to the RX Pin and vice versa for TX
 #define RFID_RX_PIN 2
@@ -48,23 +53,18 @@ void loop() {
     Serial.println(tag.raw);
   }
  
- 
-  // put your main code here, to run repeatedly:
-  temposMedium = 0;
-  for(int i=0; i<3; i++){
-    temposMedium += tempos[i];
-  }
-  temposMedium /=3;
- 
- 
   buttonState = digitalRead(12);// lit l'etat du bouton
   if(buttonState != previousButtonState){
     // changement d'etat du bouton
-    pulseCount++;
-    //
+
     int timeDifference = millis()-lastChangeTime;
-    int temposIndex = pulseCount%3;
-    tempos[temposIndex] = timeDifference;
+
+    if(temposMedium < 0) 
+      temposMedium = timeDifference; // Initialisation
+      else
+      temposMedium = 
+      (temposMedium * smoothingFactor + targetPeriod * targetFactor + delta) / factorSum; 
+    
     lastChangeTime = millis();
   }
   previousButtonState = buttonState;
@@ -74,7 +74,7 @@ void loop() {
    
  /* la vitesse du servo  */
  vitesse = temposMedium;
- vitesse = map(vitesse, 1, 6000, 2, 180); // vitesse servo proportionnelle à battement
+ vitesse = map(vitesse, 1, 6000, 2, 180); // vitesse servo proportionnelle ï¿½ battement
  vitesse_i = 182 - vitesse; // inverse la proportion
  
  
